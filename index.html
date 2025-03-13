@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My Social Media App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Header with App Title and Navigation -->
+<header>
+    <h1>My Social Media App</h1>
+    <nav>
+        <button id="loginBtn">Login</button>
+        <button id="signupBtn">Sign Up</button>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+    </nav>
+</header>
+
+<!-- Main Content -->
+<main>
+    <!-- Create Post Section (only visible when logged in) -->
+    <section id="createPostSection" style="display:none;">
+        <h2>Create a Post</h2>
+        <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+        <button id="postBtn">Post</button>
+    </section>
+
+    <!-- People to Follow Section (only visible when logged in) -->
+    <section id="peopleSection" style="display:none;">
+        <h2>People to Follow</h2>
+        <div id="peopleContainer"></div>
+    </section>
+
+    <!-- Posts Feed -->
+    <section id="postsFeed">
+        <h2>Feed</h2>
+        <div id="postsContainer"></div>
+    </section>
+</main>
+
+<!-- Pop-up / Modal Windows -->
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close" data-modal="loginModal">&times;</span>
+        <h2>Login</h2>
+        <input type="text" id="loginUsername" placeholder="Username">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button id="loginSubmit">Login</button>
+    </div>
+</div>
+
+<!-- Signup Modal -->
+<div id="signupModal" class="modal">
+    <div class="modal-content">
+        <span class="close" data-modal="signupModal">&times;</span>
+        <h2>Sign Up</h2>
+        <input type="text" id="signupUsername" placeholder="Username">
+        <input type="password" id="signupPassword" placeholder="Password">
+        <button id="signupSubmit">Sign Up</button>
+    </div>
+</div>
+
+<!-- Post Details Popup -->
+<div id="postPopup" class="modal">
+    <div class="modal-content">
+        <span class="close" data-modal="postPopup">&times;</span>
+        <h2>Post Details</h2>
+        <div id="postDetails"></div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
