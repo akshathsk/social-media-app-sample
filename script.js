@@ -1,248 +1,162 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // DOM elements
-    const loginBtn = document.getElementById('loginBtn');
-    const signupBtn = document.getElementById('signupBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const loginModal = document.getElementById('loginModal');
-    const signupModal = document.getElementById('signupModal');
-    const postPopup = document.getElementById('postPopup');
-    const postDetails = document.getElementById('postDetails');
-    const createPostSection = document.getElementById('createPostSection');
-    const postsContainer = document.getElementById('postsContainer');
-    const peopleSection = document.getElementById('peopleSection');
-    const peopleContainer = document.getElementById('peopleContainer');
+document.addEventListener("DOMContentLoaded", function() {
+    // Get the different sections
+    const loginSection = document.getElementById("login-section");
+    const signupSection = document.getElementById("signup-section");
+    const appSection = document.getElementById("app-section");
 
-    // Default list of people to follow
-    const defaultPeople = [
-        { username: "Alice" },
-        { username: "Bob" },
-        { username: "Charlie" },
-        { username: "Diana" },
-        { username: "Ethan" }
+    // Modal elements
+    const popupModal = document.getElementById("popup-modal");
+    const modalMessage = document.getElementById("modal-message");
+    const closeButton = document.querySelector(".close-button");
+
+    // Function to show popup modal with a message
+    function showPopup(message) {
+        modalMessage.textContent = message;
+        popupModal.style.display = "flex";
+    }
+
+    // Close modal when close button is clicked
+    closeButton.addEventListener("click", function() {
+        popupModal.style.display = "none";
+    });
+
+    // Function to display one section and hide others
+    function showSection(section) {
+        loginSection.style.display = "none";
+        signupSection.style.display = "none";
+        appSection.style.display = "none";
+        section.style.display = "block";
+    }
+
+    // On page load, check if a user is logged in
+    let currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser) {
+        showSection(appSection);
+    } else {
+        showSection(loginSection);
+    }
+
+    // Toggle between login and signup views
+    document.getElementById("show-signup").addEventListener("click", function(e) {
+        e.preventDefault();
+        showSection(signupSection);
+    });
+    document.getElementById("show-login").addEventListener("click", function(e) {
+        e.preventDefault();
+        showSection(loginSection);
+    });
+
+    // --- Login Functionality ---
+    const loginForm = document.getElementById("login-form");
+    const loginError = document.getElementById("login-error");
+    loginForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const username = document.getElementById("login-username").value.trim();
+        const password = document.getElementById("login-password").value;
+
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        const user = users.find(user => user.username === username && user.password === password);
+        if (user) {
+            localStorage.setItem("currentUser", JSON.stringify(user));
+            showSection(appSection);
+        } else {
+            loginError.textContent = "Invalid username or password.";
+        }
+    });
+
+    // --- Signup Functionality ---
+    const signupForm = document.getElementById("signup-form");
+    const signupError = document.getElementById("signup-error");
+    signupForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const username = document.getElementById("signup-username").value.trim();
+        const email = document.getElementById("signup-email").value.trim();
+        const password = document.getElementById("signup-password").value;
+        const confirmPassword = document.getElementById("signup-confirm-password").value;
+
+        if (password !== confirmPassword) {
+            signupError.textContent = "Passwords do not match.";
+            return;
+        }
+
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        if (users.some(user => user.username === username)) {
+            signupError.textContent = "Username already exists.";
+            return;
+        }
+
+        const newUser = { username, email, password };
+        users.push(newUser);
+        localStorage.setItem("users", JSON.stringify(users));
+        localStorage.setItem("currentUser", JSON.stringify(newUser));
+        showSection(appSection);
+    });
+
+    // --- Logout Functionality ---
+    const logoutBtn = document.getElementById("logout-btn");
+    logoutBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        localStorage.removeItem("currentUser");
+        showSection(loginSection);
+    });
+
+    // --- App (Main) Section Functionality ---
+    // Post creation functionality
+    const postBtn = document.getElementById("post-btn");
+    const postContent = document.getElementById("post-content");
+    const feed = document.getElementById("feed");
+
+    postBtn.addEventListener("click", function() {
+        const content = postContent.value.trim();
+        if (content !== "") {
+            createPost(content);
+            postContent.value = "";
+        }
+    });
+
+    function createPost(content) {
+        const postDiv = document.createElement("div");
+        postDiv.classList.add("post");
+
+        const postParagraph = document.createElement("p");
+        postParagraph.textContent = content;
+        postDiv.appendChild(postParagraph);
+
+        const likeBtn = document.createElement("button");
+        likeBtn.classList.add("like-btn");
+        likeBtn.textContent = "Like";
+        likeBtn.addEventListener("click", function() {
+            showPopup("You liked this post!");
+        });
+        postDiv.appendChild(likeBtn);
+
+        // Add the new post at the top of the feed
+        feed.insertBefore(postDiv, feed.firstChild);
+    }
+
+    // Render default suggestions to follow
+    const suggestions = [
+        { username: "john_doe", name: "John Doe" },
+        { username: "jane_smith", name: "Jane Smith" },
+        { username: "tech_guru", name: "Tech Guru" },
+        { username: "travel_bug", name: "Travel Bug" },
+        { username: "foodie", name: "Foodie" }
     ];
 
-    // Utility functions for modal open/close
-    function openModal(modal) {
-        modal.style.display = 'block';
-    }
-    function closeModal(modal) {
-        modal.style.display = 'none';
-    }
+    const suggestionsList = document.getElementById("suggestions-list");
+    suggestions.forEach(suggestion => {
+        const li = document.createElement("li");
+        li.textContent = suggestion.name;
 
-    // Attach close events for modal close buttons (x)
-    document.querySelectorAll('.close').forEach(function(closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            const modalId = closeBtn.getAttribute('data-modal');
-            closeModal(document.getElementById(modalId));
+        const followBtn = document.createElement("button");
+        followBtn.classList.add("follow-btn");
+        followBtn.textContent = "Follow";
+        followBtn.addEventListener("click", function() {
+            showPopup("You followed " + suggestion.name + "!");
+            followBtn.disabled = true;
+            followBtn.textContent = "Following";
         });
+        li.appendChild(followBtn);
+        suggestionsList.appendChild(li);
     });
-
-    // Close modal when clicking outside modal content
-    window.addEventListener('click', function(event) {
-        if (event.target.classList.contains('modal')) {
-            closeModal(event.target);
-        }
-    });
-
-    // In-memory storage simulation (using localStorage)
-    let users = JSON.parse(localStorage.getItem('users')) || [];
-    let posts = JSON.parse(localStorage.getItem('posts')) || [];
-    let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-
-    // Ensure currentUser.following exists if logged in
-    if (currentUser && !currentUser.following) {
-        currentUser.following = [];
-    }
-
-    // Update localStorage
-    function updateStorage() {
-        localStorage.setItem('users', JSON.stringify(users));
-        localStorage.setItem('posts', JSON.stringify(posts));
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    }
-
-    // Update UI based on login state
-    function updateUI() {
-        if (currentUser) {
-            loginBtn.style.display = 'none';
-            signupBtn.style.display = 'none';
-            logoutBtn.style.display = 'inline-block';
-            createPostSection.style.display = 'block';
-            peopleSection.style.display = 'block';
-        } else {
-            loginBtn.style.display = 'inline-block';
-            signupBtn.style.display = 'inline-block';
-            logoutBtn.style.display = 'none';
-            createPostSection.style.display = 'none';
-            peopleSection.style.display = 'none';
-        }
-        renderPosts();
-        renderPeople();
-    }
-
-    // Render posts feed (newest first)
-    function renderPosts() {
-        postsContainer.innerHTML = '';
-        posts.slice().reverse().forEach(function(post) {
-            const postDiv = document.createElement('div');
-            postDiv.className = 'post';
-            postDiv.innerHTML = `<strong>${post.username}</strong>: ${post.content} <br><small>${new Date(post.timestamp).toLocaleString()}</small>`;
-            postDiv.addEventListener('click', function() {
-                // Show post details in popup
-                postDetails.innerHTML = `<strong>${post.username}</strong>: ${post.content} <br><small>${new Date(post.timestamp).toLocaleString()}</small>`;
-                openModal(postPopup);
-            });
-            postsContainer.appendChild(postDiv);
-        });
-    }
-
-    // Render default people list with follow/unfollow buttons
-    function renderPeople() {
-        peopleContainer.innerHTML = '';
-        defaultPeople.forEach(function(person) {
-            const personDiv = document.createElement('div');
-            personDiv.className = 'person';
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = person.username;
-            const followBtn = document.createElement('button');
-            // Check if current user already follows this person
-            const isFollowing = currentUser && currentUser.following && currentUser.following.includes(person.username);
-            followBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
-            followBtn.addEventListener('click', function(e) {
-                // Prevent any parent click events
-                e.stopPropagation();
-                if (!currentUser) return; // Should not happen as section is hidden when logged out
-                if (!currentUser.following) {
-                    currentUser.following = [];
-                }
-                if (isFollowing) {
-                    // Unfollow: remove person.username from following list
-                    currentUser.following = currentUser.following.filter(name => name !== person.username);
-                    showPopup(`Unfollowed ${person.username}.`);
-                } else {
-                    // Follow: add person.username to following list
-                    currentUser.following.push(person.username);
-                    showPopup(`Now following ${person.username}.`);
-                }
-                updateStorage();
-                renderPeople(); // re-render list to update button text
-            });
-            personDiv.appendChild(nameSpan);
-            personDiv.appendChild(followBtn);
-            peopleContainer.appendChild(personDiv);
-        });
-    }
-
-    // Event listeners for login, signup, and logout buttons
-    loginBtn.addEventListener('click', function() {
-        openModal(loginModal);
-    });
-    signupBtn.addEventListener('click', function() {
-        openModal(signupModal);
-    });
-    logoutBtn.addEventListener('click', function() {
-        currentUser = null;
-        updateStorage();
-        updateUI();
-        showPopup('Logged out successfully!');
-    });
-
-    // Login submission
-    document.getElementById('loginSubmit').addEventListener('click', function() {
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value.trim();
-        if (!username || !password) {
-            showPopup('Please fill in all fields for login.');
-            return;
-        }
-        const user = users.find(u => u.username === username && u.password === password);
-        if (user) {
-            currentUser = user;
-            // Ensure following array exists for the user
-            if (!currentUser.following) {
-                currentUser.following = [];
-            }
-            updateStorage();
-            updateUI();
-            closeModal(loginModal);
-            showPopup('Login successful!');
-        } else {
-            showPopup('Invalid username or password.');
-        }
-    });
-
-    // Signup submission
-    document.getElementById('signupSubmit').addEventListener('click', function() {
-        const username = document.getElementById('signupUsername').value.trim();
-        const password = document.getElementById('signupPassword').value.trim();
-        if (!username || !password) {
-            showPopup('Please fill in all fields for sign up.');
-            return;
-        }
-        if (users.find(u => u.username === username)) {
-            showPopup('Username already exists.');
-            return;
-        }
-        // Create new user with an empty following list
-        const newUser = { username, password, following: [] };
-        users.push(newUser);
-        currentUser = newUser;
-        updateStorage();
-        updateUI();
-        closeModal(signupModal);
-        showPopup('Sign up successful!');
-    });
-
-    // Post creation
-    document.getElementById('postBtn').addEventListener('click', function() {
-        const content = document.getElementById('postContent').value.trim();
-        if (!content) {
-            showPopup('Please enter some content for your post.');
-            return;
-        }
-        const newPost = {
-            username: currentUser.username,
-            content,
-            timestamp: Date.now()
-        };
-        posts.push(newPost);
-        updateStorage();
-        renderPosts();
-        document.getElementById('postContent').value = '';
-        showPopup('Post created successfully!');
-    });
-
-    // Custom popup function (uses a temporary modal instead of alert)
-    function showPopup(message) {
-        const popup = document.createElement('div');
-        popup.className = 'modal';
-        popup.style.display = 'block';
-        popup.innerHTML = `
-      <div class="modal-content">
-        <span class="close" data-popup="true">&times;</span>
-        <p>${message}</p>
-      </div>
-    `;
-        document.body.appendChild(popup);
-
-        // Close popup on clicking the close button
-        popup.querySelector('.close').addEventListener('click', function() {
-            document.body.removeChild(popup);
-        });
-        // Close when clicking outside the popup content
-        popup.addEventListener('click', function(event) {
-            if (event.target === popup) {
-                document.body.removeChild(popup);
-            }
-        });
-        // Auto-close after 3 seconds
-        setTimeout(function() {
-            if (document.body.contains(popup)) {
-                document.body.removeChild(popup);
-            }
-        }, 3000);
-    }
-
-    // Initialize UI on page load
-    updateUI();
 });
